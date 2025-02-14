@@ -1,0 +1,34 @@
+services:
+  certbot-container:
+    container_name: certbot-container
+    build:
+      context: ./config
+      args:
+        CERTBOT_IMAGE_TAG: ${CERTBOT_IMAGE_TAG}
+    image: certbot-w-extras:${CERTBOT_IMAGE_TAG}
+    environment:
+      CERT_NAME: ${CERT_NAME}
+      CERT_DOMAINS: ${CERT_DOMAINS}
+      CERT_KEY_SIZE: ${CERT_KEY_SIZE}
+      CERT_CONTACT_EMAIL: ${CERT_CONTACT_EMAIL}
+      CERTBOT_EXECUTION_MODE: ${CERTBOT_EXECUTION_MODE}
+    secrets:
+      - cloudflare-api-token
+    volumes:
+      - ./logs:/var/log/letsencrypt
+      - ./letsencrypt:/etc/letsencrypt
+    networks:
+      - certbot-network
+
+secrets:
+  cloudflare-api-token:
+    file: ./config/secrets/cloudflare.ini
+
+networks:
+  certbot-network:
+    name: certbot-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.255.0/28

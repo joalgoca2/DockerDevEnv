@@ -1,0 +1,36 @@
+services:
+  app-nebular-container:
+    container_name: ${APP_NAME}-container
+    restart: unless-stopped
+    build:
+      context: ..
+      target: ${NODE_ENV}
+      dockerfile: ./.docker/Dockerfile
+      args:
+        NODE_IMAGE_TAG: "${NODE_IMAGE_TAG}"
+        NODE_ENV: "${NODE_ENV}"
+    image: ${APP_NAME}-${NODE_ENV_MIN}:${TAG_VERSION}
+    command: node --inspect=0.0.0.0:9229 node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --port 4200 --disable-host-check # tail -f /dev/null 
+    ports:
+      - "${APP_PORT}:4200"
+      - "9229:9229" #debug port
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    volumes:
+      - ../app:/usr/src/app
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://0.0.0.0:4200/ || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2GB
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    external: true

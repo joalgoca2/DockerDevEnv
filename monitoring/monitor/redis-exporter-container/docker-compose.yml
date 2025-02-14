@@ -1,0 +1,22 @@
+services:
+  redis-exporter:
+    image: oliver006/redis_exporter:${REDIS_EXPORTER_IMAGE_TAG}
+    container_name: redis-exporter
+    ports:
+      - ${REDIS_EXPORTER_PORT_NUMBER}:9121
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis:6370"
+      REDIS_USER: default
+      REDIS_PASSWORD: mysecurepassword
+    networks:
+      - redis_monitor
+      - prometheus
+
+networks:
+  redis_monitor:
+    external: true
+    name: redis_monitor
+  prometheus:
+    external: true
+    name: prometheus

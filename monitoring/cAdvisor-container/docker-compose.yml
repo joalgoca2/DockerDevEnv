@@ -1,0 +1,28 @@
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_IMAGE_TAG}
+    container_name: cadvisor-container
+    restart: unless-stopped
+    ports:
+      - "${CADVISOR_PORT}:8080"
+    command:
+      - "--docker_only=true"
+      - "--housekeeping_interval=${CADVISOR_REFRESH_RATE}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:8080/containers/ || exit 1"]
+      interval: 30s
+      retries: 3
+    networks:
+      - monitoring-network
+
+networks:
+  monitoring-network:
+    driver: bridge
+    name: monitoring-network

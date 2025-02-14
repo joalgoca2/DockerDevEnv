@@ -1,0 +1,26 @@
+services:
+  redis-cache-container:
+    container_name: redis-container
+    restart: unless-stopped
+    image: redis:${REDIS_IMAGE_TAG}
+    ports:
+      - "${REDIS_PORT_NUMBER}:6379"
+    volumes:
+      - ./data:/data  # Persistencia de datos
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf  # Configuración personalizada
+      - ./logs:/var/log/redis  # Logs de Redis
+    environment:
+      - REDIS_REPLICATION_MODE=${REDIS_REPLICATION_MODE:-master} 
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    external: true

@@ -1,0 +1,38 @@
+services:
+  mysql-container:
+    container_name: mysql-container
+    restart: unless-stopped
+    image: mysql:${MYSQL_IMAGE_TAG}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ./config/mysql.cnf:/etc/mysql/mysql.cnf
+      - ./db/backups:/srv/db_backups
+      - mysql-dev-volume:/var/lib/mysql 
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql-container-root-password
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    command: mysqld --character-set-server=${MYSQL_CHARSET} --collation-server=${MYSQL_CHARSET}_unicode_ci
+    secrets:
+      - mysql-container-root-password
+    healthcheck:
+      test: ["CMD", "mysqladmin","-uroot","-p$$(cat $$POSTGRESS_PASSWORD_FILE)","ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dev-network
+
+secrets:
+  mysql-container-root-password:
+    file: ./secrets/db-root-password.txt
+
+volumes:
+  mysql-dev-volume:
+    name: mysql-data
+    driver: local
+
+networks:
+  dev-network:
+    external: true

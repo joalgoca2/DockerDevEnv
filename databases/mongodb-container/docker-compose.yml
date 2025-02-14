@@ -1,0 +1,36 @@
+services:
+  mongodb-container:
+    container_name: mongodb-container
+    image: mongo:${MONGODB_IMAGE_TAG:-6.0}
+    restart: unless-stopped
+    ports:
+      - "${MONGODB_PORT}:27017"
+    volumes:
+      - ./config/mongod.conf:/etc/mongod.conf  # Configuración personalizada
+      #- ./logs:/var/log/mongodb  # Logs de MongoDB
+      - mongodb-data:/data/db  # Persistencia de datos
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongodb-root-password
+    secrets:
+      - mongodb-root-password
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dev-network
+
+secrets:
+  mongodb-root-password:
+    file: ./secrets/mongodb-root-password.txt
+
+volumes:
+  mongodb-data:
+    driver: local
+
+networks:
+  dev-network:
+    external: true

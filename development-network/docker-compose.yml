@@ -1,0 +1,15 @@
+services:
+  dev-network-container:
+    container_name: hello-word-dev
+    image: hello-world:latest
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    name: dev-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.100.0/24

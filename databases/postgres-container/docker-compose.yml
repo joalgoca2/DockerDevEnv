@@ -1,0 +1,40 @@
+services:
+  postgres-container:
+    container_name: postgres-container
+    restart: unless-stopped
+    image: postgres:${POSTGRES_IMAGE_TAG}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./db/backups:/srv/db_backups
+      - ./logs:/var/log/postgresql
+      - postgres-container-volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-container-password
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    secrets:
+      - postgres-container-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DATABASE}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dev-network
+
+secrets:
+  postgres-container-password:
+    file: ./secrets/db-password.txt
+
+volumes:
+  postgres-container-volume:
+    name: postgres-data
+    driver: local
+
+networks:
+  dev-network:
+    external: true

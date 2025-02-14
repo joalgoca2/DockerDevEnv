@@ -1,0 +1,38 @@
+services:
+  mariadb-container:
+    container_name: mariadb-container
+    restart: unless-stopped
+    image: mariadb:${MARIADB_IMAGE_TAG}
+    ports:
+      - "${MARIADB_PORT}:3306"
+    volumes:
+      - ./config/my.cnf:/etc/mariadb/my.cnf
+      - ./db/backups:/srv/db_backups
+      - mariadb-container-volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mariadb-container-root-password
+      MYSQL_DATABASE: ${MARIADB_DATABASE}
+    command: mariadbd --character-set-server=${MARIADB_CHARSET} --collation-server=${MARIADB_CHARSET}_unicode_ci
+    secrets:
+      - mariadb-container-root-password
+    healthcheck:
+      test: ["CMD", "mariadb-admin","-uroot","-p$$(cat $$MYSQL_ROOT_PASSWORD_FILE)","ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dev-network
+
+secrets:
+  mariadb-container-root-password:
+    file: ./secrets/db-root-password.txt
+
+volumes:
+  mariadb-container-volume:
+    name: mariadb-data
+    driver: local
+
+networks:
+  dev-network:
+    external: true

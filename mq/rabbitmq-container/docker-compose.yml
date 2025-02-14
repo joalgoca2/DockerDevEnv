@@ -1,0 +1,31 @@
+services:
+  rabbitmq-container:
+    restart: unless-stopped
+    container_name: 'rabbitmq-container'
+    image: rabbitmq:${RABBITMQ_IMAGE_TAG:-4.0.5-alpine}
+    ports:
+      - "${RABBITMQ_PORT}:5672"  # Puerto para AMQP (conexiones de clientes)
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"  # Puerto para la interfaz de gestión
+    volumes:
+      - rabbitmq-dev-volume:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf  # Configuración personalizada
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - dev-network
+
+volumes:  
+  rabbitmq-dev-volume:
+    name: rabbitmq-dev-volume
+    driver: local
+
+networks:
+  dev-network:
+    external: true
