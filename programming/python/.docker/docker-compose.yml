@@ -1,0 +1,23 @@
+services:
+  app-python-container:
+    container_name: ${APP_NAME}-container
+    build:
+      context: ..
+      target: ${NODE_ENV}
+      dockerfile: ./.docker/Dockerfile
+      args:
+        NODE_IMAGE_TAG: "${NODE_IMAGE_TAG}"
+        NODE_ENV: "${NODE_ENV}"
+    image: ${APP_NAME}-${NODE_ENV_MIN}:${TAG_VERSION}
+    ports:
+      - "${APP_PORT}:8000"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    volumes:
+      - ../app:/usr/src/app
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    external: true
