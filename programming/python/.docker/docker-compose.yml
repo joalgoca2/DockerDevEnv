@@ -8,7 +8,7 @@ services:
       args:
         NODE_IMAGE_TAG: "${NODE_IMAGE_TAG}"
         NODE_ENV: "${NODE_ENV}"
-    image: ${APP_NAME}-${NODE_ENV_MIN}:${TAG_VERSION}
+    image: ${APP_NAME}:${TAG_VERSION}
     ports:
       - "${APP_PORT}:8000"
     environment:

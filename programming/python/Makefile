@@ -27,7 +27,7 @@ first-install: ## Levanta el proyecto en local
 	$(MAKE) build-debug
 
 destroy:  ## Limpia el proyecto completo
-	$(MAKE) node-env-clear
+	$(MAKE) python-env-clear
 	$(MAKE) docker-prune
 	$(MAKE) clean-env-docker
 	$(MAKE) clean-images
