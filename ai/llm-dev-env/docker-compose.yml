@@ -1,0 +1,51 @@
+services:
+  ollama_container:
+    image: ollama/ollama:latest # Imagen oficial de Ollama
+    container_name: ollama_container
+    ports:
+      - "11434:11434" # Puerto estándar de la API de Ollama
+    volumes:
+      - ollama_data:/root/.ollama # Volumen persistente para los modelos descargados
+    # --- Intento de habilitar GPU AMD (ROCm) ---
+    # Descomenta las siguientes líneas si quieres intentar usar la GPU.
+    # ¡OJO!: El soporte ROCm en Ollama y en GPUs integradas puede ser experimental o no funcionar.
+    # Es probable que Ollama recurra a la CPU si falla.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: amd
+    #           capabilities: [gpu]
+    # ------------------------------------------
+    restart: unless-stopped
+
+  llm_dev_container:
+    build: . # Construye la imagen a partir del Dockerfile en el directorio actual
+    container_name: llm_dev_container
+    ports:
+      - "8888:8888" # Puerto para Jupyter Lab
+    volumes:
+      - ./notebooks:/app/notebooks # Mapea tu carpeta local de notebooks al contenedor
+      - ./data:/app/data             # Mapea tu carpeta local de datos
+      - ./output_model:/app/output_model # Mapea una carpeta para guardar el modelo afinado
+    # Asegúrate de que el contenedor de desarrollo espere a que Ollama esté listo (opcional pero útil)
+    depends_on:
+      - ollama_container
+    environment:
+      - OLLAMA_HOST=http://ollama_container:11434 # Usa el nombre del servicio 'ollama'
+      # Variables para Hugging Face / Accelerate (pueden ayudar con CPU)
+      - ACCELERATE_USE_CPU=true
+      - ACCELERATE_MIXED_PRECISION=no # O 'fp16'/'bf16' si tu CPU lo soporta bien y tienes RAM
+      - HF_HOME=/app/huggingface_cache # Opcional: Cache de HuggingFace dentro del contenedor
+    # Mantenemos el contenedor corriendo para Jupyter
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --allow-root --no-browser --NotebookApp.token=''
+    restart: unless-stopped
+    # --- Consideración de Recursos ---
+    # Puedes intentar limitar la memoria si es necesario, pero el fine-tuning necesita bastante
+    deploy:
+      resources:
+        limits:
+          memory: 10G # ¡Ajusta según tus pruebas!
+
+volumes:
+  ollama_data: # Define el volumen nombrado para persistir modelos de Ollama
